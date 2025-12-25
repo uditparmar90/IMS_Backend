@@ -7,7 +7,6 @@ namespace IMS_Backend.DBCommection
     {
         public MyApplicationDB(DbContextOptions<MyApplicationDB> options) : base(options)
         {
-
         }
         public DbSet<Products> Products { get; set; }
         public DbSet<ClsUsers> ClsUsers { get; set; }
