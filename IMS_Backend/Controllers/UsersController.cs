@@ -1,6 +1,5 @@
 ﻿using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +7,7 @@ namespace IMS_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class UsersController : ControllerBase
     {
         private readonly MyApplicationDB _context;
