@@ -7,19 +7,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<IMS_Backend.DBCommection.MyApplicationDB>(options =>
     options.UseSqlServer(connectionString));
 // Add services to the container.
-// 1. Define the policy
+//1.Define the policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp",
-        policy => policy.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader());// Your Angular URL
+       policy => policy.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader());// Your Angular URL
 });
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 //builder.Services.AddOpenApi();
-
 var app = builder.Build();
 
 // 2. Use the policy

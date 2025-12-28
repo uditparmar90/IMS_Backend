@@ -11,7 +11,7 @@ namespace IMS_Backend.Models
         public int Category_id { get; set; }
         public int SubCategory_id { get; set; }
         //..Stock kipping Unit
-        public string SKU { get; set; }
+        public required string SKU { get; set; }
         public Decimal Original_Cost { get; set; }
         public Decimal Reorder_lavel { get; set; }
 

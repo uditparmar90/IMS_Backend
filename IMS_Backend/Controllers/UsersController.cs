@@ -1,6 +1,6 @@
 ﻿using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
-using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +8,7 @@ namespace IMS_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly MyApplicationDB _context;
@@ -15,33 +16,33 @@ namespace IMS_Backend.Controllers
         {
             _context = context;
         }
-        [HttpPost]
-        public async Task<ActionResult<ClsUsers>> InsertUser(ClsUsers user)
-        {
-            if (await _context.ClsUsers.AnyAsync(u => u.Email == user.Email))
-            {
-                return BadRequest("This email already exists.");
-            }
+        //[HttpPost]
+        //public async Task<ActionResult<ClsUsers>> InsertUser(ClsUsers user)
+        //{
+        //    if (await _context.ClsUsers.AnyAsync(u => u.Email == user.Email))
+        //    {
+        //        return BadRequest("This email already exists.");
+        //    }
 
-            _context.ClsUsers.Add(user);
-            await _context.SaveChangesAsync();
-            return Created();
-        }
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ClsUsers>> GetUserById([FromBody] int id, string password)
-        {
-            var user = await _context.ClsUsers.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                user.Password = password;
-                return Ok(true);
-            }
-            ;
-        }
+        //    _context.ClsUsers.Add(user);
+        //    await _context.SaveChangesAsync();
+        //    return Created();
+        //}
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<ClsUsers>> GetUserById([FromBody] int id, string password)
+        //{
+        //    var user = await _context.ClsUsers.FindAsync(id);
+        //    if (user == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    else
+        //    {
+        //        user.Password = password;
+        //        return Ok(true);
+        //    }
+        //    ;
+        //}
         [HttpPatch("{ID}")]
         public async Task<IActionResult> UpdateUser(int ID, ClsUsers users)
         {
@@ -72,11 +73,23 @@ namespace IMS_Backend.Controllers
                 return BadRequest($"Error updating user:" + ex.Message);
             }
         }
+        [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
+            if (request == null)
+                return BadRequest("Body is null");
+
             var email = request.Email;
             var password = request.Password;
             return _context.ClsUsers.Where(u => u.Email == email && u.Password == password).Any() ? Ok(true) : Unauthorized();
         }
+
+    };
+    public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+
+
     }
 }
