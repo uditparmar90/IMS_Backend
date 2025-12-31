@@ -72,23 +72,6 @@ namespace IMS_Backend.Controllers
                 return BadRequest($"Error updating user:" + ex.Message);
             }
         }
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
-        {
-            if (request == null)
-                return BadRequest("Body is null");
-
-            var email = request.Email;
-            var password = request.Password;
-            return _context.ClsUsers.Where(u => u.Email == email && u.Password == password).Any() ? Ok(true) : Unauthorized();
-        }
 
     };
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-
-
-    }
 }
