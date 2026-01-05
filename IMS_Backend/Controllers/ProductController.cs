@@ -22,6 +22,7 @@ namespace IMS_Backend.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
+
     //[Authorize]
     public class ProductController : ControllerBase
     {
@@ -30,7 +31,6 @@ namespace IMS_Backend.Controllers
 
         public ProductController(IConfiguration config, MyApplicationDB context)
         {
-            _config = config;
             _context = context;
         }
         [HttpPost("Insert")]
@@ -64,6 +64,7 @@ namespace IMS_Backend.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllProducts")]
         public List<Products> GetAllProducts()
         {
             var products = _context.Products.ToList();

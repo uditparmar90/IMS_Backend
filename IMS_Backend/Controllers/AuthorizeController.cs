@@ -45,7 +45,7 @@ namespace IMS_Backend.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginDto dto)
         {
-            // 1. Fetch the actual user from the database
+            // 1. Fetch the actual user from the datab  ase
             // We use FirstOrDefault instead of Any() because we need the user object data (ID, Role) for the token.
             var dbUser = _context.ClsUsers
                 .FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
