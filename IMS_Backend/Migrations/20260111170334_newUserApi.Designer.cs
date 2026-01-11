@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IMS_Backend.Migrations
 {
     [DbContext(typeof(MyApplicationDB))]
-    [Migration("20251224174759_for_creare_all_table_in_DB_respect_to_classes")]
-    partial class for_creare_all_table_in_DB_respect_to_classes
+    [Migration("20260111170334_newUserApi")]
+    partial class newUserApi
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

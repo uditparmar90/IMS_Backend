@@ -65,10 +65,46 @@ namespace IMS_Backend.Controllers
 
             return Ok(new { token });
         }
+
+        [AllowAnonymous]
+        [HttpPost("AddNewUser")]
+        public IActionResult AddUser([FromBody] AdduserDto user)
+        {
+            user.Email = user.Email.ToLower();
+            var existingUser = _context.ClsUsers.FirstOrDefault(u => u.Email == user.Email);
+            if (existingUser != null)
+            {
+                return Conflict("User with this email already exists.");
+            }
+            else
+            {
+                var newUser = new ClsUsers
+                {
+                    Email = user.Email,
+                    Password = user.Password,
+                    Name = user.Name,
+                    Role = user.Role,
+                    created = DateTime.Now
+                };
+                _context.ClsUsers.Add(newUser);
+                _context.SaveChanges();
+            }
+
+            return Ok();
+        }
     }
+    
     public class LoginDto
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
+    }
+    public class AdduserDto
+    {
+        public required string Email { get; set; }
+        public required string Password { get; set; }
+        public required string Name { get; set; }
+        public required string Role { get; set; }
+
     }
 }
