@@ -92,6 +92,25 @@ namespace IMS_Backend.Controllers
 
             return Ok();
         }
+        [HttpPost("EditUserProfile")]
+        public IActionResult EditUserProfile([FromBody] ClsUsers user)
+        {
+            var existingUser = _context.ClsUsers.FirstOrDefault(u => u.ID == user.ID);
+            if (existingUser == null)
+            {
+                return NotFound("User not found.");
+            }
+            else
+            {
+                existingUser.Name = user.Name;
+                existingUser.Password = user.Password;
+                //existingUser.Role = user.Role;
+                //existingUser.Email = user.Email;
+                _context.SaveChanges();
+
+            }
+                return Ok();
+        }
     }
     
     public class LoginDto
