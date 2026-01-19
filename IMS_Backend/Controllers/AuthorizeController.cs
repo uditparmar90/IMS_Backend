@@ -14,13 +14,14 @@ namespace IMS_Backend.Controllers
     [Authorize]
     public class AuthorizeController : ControllerBase
     {
-        readonly IConfiguration _config;
-        readonly MyApplicationDB _context;
+       
         public AuthorizeController(IConfiguration config, MyApplicationDB context)
         {
             _config = config;
             _context = context;
         }
+        readonly IConfiguration _config;
+        readonly MyApplicationDB _context;
         private string GenerateJwtToken(ClsUsers users)
         {
             var claims = new[]

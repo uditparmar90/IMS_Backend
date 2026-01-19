@@ -4,6 +4,7 @@ using IMS_Backend.DBCommection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IMS_Backend.Migrations
 {
     [DbContext(typeof(MyApplicationDB))]
-    partial class MyApplicationDBModelSnapshot : ModelSnapshot
+    [Migration("20260119171323_product_DB_schema_changes")]
+    partial class product_DB_schema_changes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

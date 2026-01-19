@@ -17,6 +17,7 @@ namespace IMS_Backend.Models
         public decimal Original_Cost { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal Reorder_lavel { get; set; }
+        public bool? IsActive { get; set; } 
 
 
     }

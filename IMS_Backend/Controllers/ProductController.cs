@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿
+using System.Diagnostics;
 using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ namespace IMS_Backend.Controllers
         public required string SKU { get; set; }
         public Decimal Original_Cost { get; set; }
         public Decimal Reorder_level { get; set; }
+        public bool IsActive { get; set; }
 
     }
 
@@ -48,7 +50,8 @@ namespace IMS_Backend.Controllers
                     SKU = prodDto.SKU,
                     Original_Cost = prodDto.Original_Cost,
                     //need fix typo in Product class
-                    Reorder_lavel = prodDto.Reorder_level
+                    Reorder_lavel = prodDto.Reorder_level,
+                    IsActive = prodDto.IsActive
                 };
 
                 var msg = _context.Products.AddAsync(newProduct);
