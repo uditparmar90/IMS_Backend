@@ -12,5 +12,6 @@ namespace IMS_Backend.Models
         public int Warehouse_id { get; set; }
         public int Quantity_on_hand { get; set; }
         public DateTime Last_updated { get; set; }
+        public int? UserId { get; set; }
     }
 }

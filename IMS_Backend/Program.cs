@@ -30,7 +30,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 
 builder.Services.AddDbContext<IMS_Backend.DBCommection.MyApplicationDB>(options =>
-    options.UseSqlServer(connectionString));
+        options.UseSqlServer(connectionString)
+    );
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 // Add services to the container.
 //1.Define the policy
 builder.Services.AddCors(options =>
@@ -93,5 +101,6 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 app.MapControllers();
 app.Run();

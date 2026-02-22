@@ -74,6 +74,9 @@ namespace IMS_Backend.Migrations
                     b.Property<int>("Transaction_type")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Transaction_id");
 
                     b.ToTable("Inventory_Transactions");
@@ -113,6 +116,9 @@ namespace IMS_Backend.Migrations
                     b.Property<int>("SubCategory_id")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Products");
@@ -133,6 +139,9 @@ namespace IMS_Backend.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity_on_hand")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
                         .HasColumnType("int");
 
                     b.Property<int>("Warehouse_id")

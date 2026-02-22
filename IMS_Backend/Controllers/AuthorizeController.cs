@@ -28,7 +28,9 @@ namespace IMS_Backend.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, users.ID.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, users.Email),
-                new Claim(ClaimTypes.Role, users.Role)
+                new Claim(ClaimTypes.Role, users.Role),
+                new Claim(ClaimTypes.Sid,users.ID.ToString())
+
             };
             var jwtKey = _config["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
@@ -42,29 +44,30 @@ namespace IMS_Backend.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+
         [AllowAnonymous]
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginDto dto)
         {
             // 1. Fetch the actual user from the datab  ase
             // We use FirstOrDefault instead of Any() because we need the user object data (ID, Role) for the token.
-            var dbUser = _context.ClsUsers
-                .FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
+            var dbUser = _context.ClsUsers.FirstOrDefault(u => u.Email == dto.Email && u.Password == dto.Password);
 
             // 2. Check if user exists
             if (dbUser == null)
             {
                 return Unauthorized("Invalid credentials");
             }
-            //HttpContext.Session.SetInt32("UserId", dbUser.ID);
-            //HttpContext.Session.SetString("UserEmail", dbUser.Email);
-            //HttpContext.Session.SetString("UserRole", dbUser.Role);
+
+            HttpContext.Session.SetInt32("UserId", dbUser.ID);
 
             // 3. Generate token using the Database User object (which has the ID and Role),
             // NOT the DTO (which only has Email and Password).
             var token = GenerateJwtToken(dbUser);
-
-            return Ok(new { token });
+            var userData = new ClsUsers { ID =dbUser.ID,Name=dbUser.Name,Password=dbUser.Password,Email=dbUser.Email,Role=dbUser.Role };
+            HttpContext.Session.SetInt32("UserId", dbUser.ID);
+            return Ok(new { token,userInfo=userData });
         }
 
         [AllowAnonymous]

@@ -1,8 +1,8 @@
-﻿
-using System.Diagnostics;
-using IMS_Backend.DBCommection;
+﻿using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace IMS_Backend.Controllers
 {
@@ -20,8 +20,7 @@ namespace IMS_Backend.Controllers
         public Decimal Reorder_level { get; set; }
         public bool IsActive { get; set; }
 
-    }
-
+    };
     [ApiController]
     [Route("api/[controller]")]
 
@@ -30,16 +29,23 @@ namespace IMS_Backend.Controllers
     {
         readonly MyApplicationDB _context;
         readonly IConfiguration _config;
+        readonly int UserId;
 
         public ProductController(IConfiguration config, MyApplicationDB context)
         {
             _context = context;
+            //UserId = HttpContext.Session.GetInt32("UserId")??0;
+            
         }
+
         [HttpPost("Insert")]
         public IActionResult Insert([FromBody] ProductTdo prodDto)
         {
             try
             {
+                var userid = User.FindFirst(ClaimTypes.Sid);
+                int intUserId = Convert.ToInt32(userid);
+
                 var newProduct = new Products
                 {
                     //Id = prodDto.Id,
@@ -49,7 +55,6 @@ namespace IMS_Backend.Controllers
                     SubCategory_id = prodDto.SubCategory_id,
                     SKU = prodDto.SKU,
                     Original_Cost = prodDto.Original_Cost,
-                    //need fix typo in Product class
                     Reorder_lavel = prodDto.Reorder_level,
                     IsActive = prodDto.IsActive
                 };
@@ -62,7 +67,7 @@ namespace IMS_Backend.Controllers
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                return StatusCode(500, new { error = ex.Message }); ;
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
@@ -70,7 +75,9 @@ namespace IMS_Backend.Controllers
         [Route("GetAllProducts")]
         public List<Products> GetAllProducts()
         {
-            var products = _context.Products.ToList();
+            int UserId=HttpContext.Session.GetInt32("UserId")??0;
+            Console.WriteLine("consoleWL: " +UserId);
+                var products = _context.Products.Where(prod =>prod.UserId==1).OrderByDescending(p => p.Id).ToList();
             return products;
         }
 
@@ -80,7 +87,7 @@ namespace IMS_Backend.Controllers
         {
             _context.Products.Remove(_context.Products.Find(id)!);
             _context.SaveChanges();
-            return id;
+            return id;  
         }
         [HttpPut]
         [Route("Update/{id}")]
@@ -97,7 +104,6 @@ namespace IMS_Backend.Controllers
             existingProduct.SubCategory_id = prodDto.SubCategory_id;
             existingProduct.SKU = prodDto.SKU;
             existingProduct.Original_Cost = prodDto.Original_Cost;
-            // fixed typo mapping
             existingProduct.Reorder_lavel = prodDto.Reorder_level;
 
 
@@ -110,7 +116,6 @@ namespace IMS_Backend.Controllers
                 SubCategory_id = prodDto.SubCategory_id,
                 SKU = prodDto.SKU,
                 Original_Cost = prodDto.Original_Cost,
-                //need fix typo in Product class
                 Reorder_lavel = prodDto.Reorder_level
             };
             _context.SaveChanges();

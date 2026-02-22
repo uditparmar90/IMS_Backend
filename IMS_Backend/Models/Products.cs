@@ -19,6 +19,7 @@ namespace IMS_Backend.Models
         public decimal Reorder_lavel { get; set; }
         public bool? IsActive { get; set; } 
 
+        public int? UserId { get; set; }
 
     }
 }

@@ -12,5 +12,6 @@ namespace IMS_Backend.Models
 
         public int Quantity { get; set; }//(Positive for additions, negative for subtractions)
         public DateTime Created_at { get; set; }
+        public int? UserId { get; set; }
     }
 }
