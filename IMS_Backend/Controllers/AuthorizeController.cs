@@ -14,7 +14,7 @@ namespace IMS_Backend.Controllers
     [Authorize]
     public class AuthorizeController : ControllerBase
     {
-       
+
         public AuthorizeController(IConfiguration config, MyApplicationDB context)
         {
             _config = config;
@@ -24,27 +24,33 @@ namespace IMS_Backend.Controllers
         readonly MyApplicationDB _context;
         private string GenerateJwtToken(ClsUsers users)
         {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, users.ID.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, users.Email),
-                new Claim(ClaimTypes.Role, users.Role),
-                new Claim(ClaimTypes.Sid,users.ID.ToString())
-
-            };
             var jwtKey = _config["Jwt:Key"];
-            if (string.IsNullOrEmpty(jwtKey))
-            {
-                throw new InvalidOperationException("JWT key is not configured.");
-            }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"], _config["Jwt:Audience"], claims, DateTime.UtcNow.AddMinutes(
-              Convert.ToDouble(_config["Jwt:ValidDurationInMinutes"])), signingCredentials: creds);
+            var expiration = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["Jwt:ValidDurationInMinutes"]));
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, users.ID.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, users.Email),
+                    new Claim(ClaimTypes.Role, users.Role),
+                    new Claim(ClaimTypes.NameIdentifier, users.ID.ToString()),
+                    // Manually adding Jti (unique ID) can help with validation
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                }),
+                Expires = expiration,
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"],
+                SigningCredentials = creds
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
         }
-
 
         [AllowAnonymous]
         [HttpPost("login")]
@@ -60,14 +66,11 @@ namespace IMS_Backend.Controllers
                 return Unauthorized("Invalid credentials");
             }
 
-            HttpContext.Session.SetInt32("UserId", dbUser.ID);
-
             // 3. Generate token using the Database User object (which has the ID and Role),
             // NOT the DTO (which only has Email and Password).
             var token = GenerateJwtToken(dbUser);
-            var userData = new ClsUsers { ID =dbUser.ID,Name=dbUser.Name,Password=dbUser.Password,Email=dbUser.Email,Role=dbUser.Role };
-            HttpContext.Session.SetInt32("UserId", dbUser.ID);
-            return Ok(new { token,userInfo=userData });
+            var userData = new ClsUsers { ID = dbUser.ID, Name = dbUser.Name, Password = dbUser.Password, Email = dbUser.Email, Role = dbUser.Role };
+            return Ok(new { token, userInfo = userData });
         }
 
         [AllowAnonymous]
@@ -113,10 +116,10 @@ namespace IMS_Backend.Controllers
                 _context.SaveChanges();
 
             }
-                return Ok();
+            return Ok();
         }
     }
-    
+
     public class LoginDto
     {
         public required string Email { get; set; }

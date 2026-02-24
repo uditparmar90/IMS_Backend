@@ -1,5 +1,6 @@
 ﻿using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -21,10 +22,10 @@ namespace IMS_Backend.Controllers
         public bool IsActive { get; set; }
 
     };
+
     [ApiController]
     [Route("api/[controller]")]
-
-    //[Authorize]
+    [Authorize]
     public class ProductController : ControllerBase
     {
         readonly MyApplicationDB _context;
@@ -43,7 +44,7 @@ namespace IMS_Backend.Controllers
         {
             try
             {
-                var userid = User.FindFirst(ClaimTypes.Sid);
+                var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 int intUserId = Convert.ToInt32(userid);
 
                 var newProduct = new Products
@@ -70,14 +71,14 @@ namespace IMS_Backend.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-
         [HttpGet]
         [Route("GetAllProducts")]
         public List<Products> GetAllProducts()
         {
-            int UserId=HttpContext.Session.GetInt32("UserId")??0;
-            Console.WriteLine("consoleWL: " +UserId);
-                var products = _context.Products.Where(prod =>prod.UserId==1).OrderByDescending(p => p.Id).ToList();
+            var StrUserId=User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            Console.WriteLine("userid : " + StrUserId);
+            int UserId = Convert.ToInt32(StrUserId);
+            var products = _context.Products.Where(prod =>prod.UserId== UserId).OrderByDescending(p => p.Id).ToList();
             return products;
         }
 

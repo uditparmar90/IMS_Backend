@@ -1,106 +1,115 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using IMS_Backend.DBCommection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+// 1. CRITICAL: Clear the default outbound mapping to prevent "http://schemas..." links
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 var builder = WebApplication.CreateBuilder(args);
-//connectionstring
+
+// Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-var Key = builder.Configuration["Jwt:Key"];
-var Issuer = builder.Configuration["Jwt:Issuer"];
-var Audience = builder.Configuration["Jwt:Audience"];
-var ValidDurationInMinitues = builder.Configuration["Jwt:ValidDurationInMinutes"];
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+// 2. Authentication Setup
+builder.Services.AddAuthentication(options =>
 {
-    options.Authority = "https://securetoken.google.com/ims-backend-7f6f4";
-    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-
-        ValidIssuer = Issuer,
-        ValidAudience = Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Key)),
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("Auth Failed: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token Validated for: " + context.Principal.Identity.Name);
+            return Task.CompletedTask;
+        }
     };
 });
 
+// Database
+builder.Services.AddDbContext<MyApplicationDB>(options =>
+    options.UseSqlServer(connectionString)
+);
 
-builder.Services.AddDbContext<IMS_Backend.DBCommection.MyApplicationDB>(options =>
-        options.UseSqlServer(connectionString)
-    );
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(10);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-// Add services to the container.
-//1.Define the policy
+// CORS Policy
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularApp",
-       policy => policy.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader());// Your Angular URL
+    options.AddPolicy("AllowAngularApp", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials());
 });
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// 3. Swagger Configuration (Ensures the "Authorize" button works correctly)
 builder.Services.AddSwaggerGen(c =>
 {
-    //c.SwaggerDoc("v1", new OpenApiInfo { Title = "IMS API", Version = "v1" });
-
-    //// Define the Security Scheme (The "Authorize" Button)
-    //c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    //{
-    //    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
-    //    Name = "Authorization",
-    //    In = ParameterLocation.Header,
-    //    Type = SecuritySchemeType.ApiKey,
-    //    Scheme = "Bearer"
-    //});
-    // Apply the Security Scheme to endpoints
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "IMS API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' [space] and then your valid token.\r\n\r\nExample: \"Bearer eyJhbG...\""
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header,
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
-            new List<string>()
+            new string[] {}
         }
     });
 });
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
+
 var app = builder.Build();
 
-// 2. Use the policy
+// Middleware Pipeline Order
 app.UseCors("AllowAngularApp");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        // Explicitly point to the JSON file Swashbuckle generates
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "IMS API v1");
-    });
+    app.UseSwaggerUI();
 }
+
 app.UseHttpsRedirection();
 
+// IMPORTANT: Authentication must come before Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
+
 app.MapControllers();
+
 app.Run();
