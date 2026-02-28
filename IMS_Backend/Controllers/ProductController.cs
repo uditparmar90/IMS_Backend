@@ -35,7 +35,6 @@ namespace IMS_Backend.Controllers
         public ProductController(IConfiguration config, MyApplicationDB context)
         {
             _context = context;
-            //UserId = HttpContext.Session.GetInt32("UserId")??0;
             
         }
 
