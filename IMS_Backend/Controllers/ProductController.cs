@@ -10,7 +10,7 @@ namespace IMS_Backend.Controllers
     public class ProductTdo
     {
         //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        //public int Id { get; set; }
+        public int UserId { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Category_id { get; set; }
@@ -43,12 +43,13 @@ namespace IMS_Backend.Controllers
         {
             try
             {
-                var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                int intUserId = Convert.ToInt32(userid);
+                var StrUserId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+                Console.WriteLine("userid : " + StrUserId);
+                int UserId = Convert.ToInt32(StrUserId);
 
                 var newProduct = new Products
                 {
-                    //Id = prodDto.Id,
+                    UserId = UserId,
                     Name = prodDto.Name,
                     Price = prodDto.Price,
                     Category_id = prodDto.Category_id,
