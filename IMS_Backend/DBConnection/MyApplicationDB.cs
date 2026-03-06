@@ -12,6 +12,7 @@ namespace IMS_Backend.DBCommection
         public DbSet<ClsUsers> ClsUsers { get; set; }
         public DbSet<Inventory_Transactions> Inventory_Transactions { get; set; }
         public DbSet<StockLvl> stockLvls { get; set; }
+        public DbSet <ProductCategory> ProdCategory { get; set; }
 
 
     }

@@ -82,6 +82,23 @@ namespace IMS_Backend.Migrations
                     b.ToTable("Inventory_Transactions");
                 });
 
+            modelBuilder.Entity("IMS_Backend.Models.ProductCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProdCategory");
+                });
+
             modelBuilder.Entity("IMS_Backend.Models.Products", b =>
                 {
                     b.Property<int>("Id")
