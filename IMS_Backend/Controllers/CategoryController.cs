@@ -1,5 +1,7 @@
 ﻿using IMS_Backend.DBCommection;
+using IMS_Backend.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IMS_Backend.Controllers
 {
@@ -12,10 +14,16 @@ namespace IMS_Backend.Controllers
         {
             _context=context;
         }
+
         [HttpGet]
-        public IActionResult GetCate()
+        [Route("GetCategory")]
+        public IActionResult GetCategory()
         {
-             return Ok(_context.ProdCategory.ToList());
+            int UserId=Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var category = _context.ProdCategory.Where(c => c.UserId == UserId);
+
+
+            return Ok(category);
             //return View();
         }
     }
