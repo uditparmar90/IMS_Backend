@@ -12,16 +12,11 @@ namespace IMS_Backend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class AuthorizeController : ControllerBase
+    public class AuthorizeController(IConfiguration config, MyApplicationDB context) : ControllerBase
     {
 
-        public AuthorizeController(IConfiguration config, MyApplicationDB context)
-        {
-            _config = config;
-            _context = context;
-        }
-        readonly IConfiguration _config;
-        readonly MyApplicationDB _context;
+        readonly IConfiguration _config=config;
+        readonly MyApplicationDB _context= context;
         private string GenerateJwtToken(ClsUsers users)
         {
             var jwtKey = _config["Jwt:Key"];
@@ -31,15 +26,15 @@ namespace IMS_Backend.Controllers
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
+                Subject = new ClaimsIdentity([
+                
                     new Claim(JwtRegisteredClaimNames.Sub, users.ID.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, users.Email),
                     new Claim(ClaimTypes.Role, users.Role),
                     new Claim(ClaimTypes.NameIdentifier, users.ID.ToString()),
                     // Manually adding Jti (unique ID) can help with validation
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                }),
+                ]),
                 Expires = expiration,
                 Issuer = _config["Jwt:Issuer"],
                 Audience = _config["Jwt:Audience"],

@@ -1,5 +1,6 @@
 ﻿using IMS_Backend.DBCommection;
 using IMS_Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -7,13 +8,11 @@ namespace IMS_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CategoryController : ControllerBase
+    [Authorize]
+    public class CategoryController(MyApplicationDB context) : ControllerBase
     {
-        public readonly MyApplicationDB _context;
-        public CategoryController(MyApplicationDB context)
-        {
-            _context=context;
-        }
+        public readonly MyApplicationDB _context=context;
+        
 
         [HttpGet]
         [Route("GetCategory")]

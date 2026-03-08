@@ -26,17 +26,11 @@ namespace IMS_Backend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class ProductController : ControllerBase
+    public class ProductController(MyApplicationDB context) : ControllerBase
     {
-        readonly MyApplicationDB _context;
-        readonly IConfiguration _config;
+        readonly MyApplicationDB _context= context;
         readonly int UserId;
 
-        public ProductController(IConfiguration config, MyApplicationDB context)
-        {
-            _context = context;
-            
-        }
 
         [HttpPost("Insert")]
         public IActionResult Insert([FromBody] ProductTdo prodDto)
@@ -84,7 +78,7 @@ namespace IMS_Backend.Controllers
 
         [HttpDelete]
         [Route("delete/{id}")]
-        public int delete(int id)
+        public int Delete(int id)
         {
             _context.Products.Remove(_context.Products.Find(id)!);
             _context.SaveChanges();

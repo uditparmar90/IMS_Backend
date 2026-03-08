@@ -8,13 +8,10 @@ namespace IMS_Backend.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Microsoft.AspNetCore.Authorization.Authorize]
-    public class UsersController : ControllerBase
+    public class UsersController(MyApplicationDB context) : ControllerBase
     {
-        private readonly MyApplicationDB _context;
-        public UsersController(MyApplicationDB context)
-        {
-            _context = context;
-        }
+        private readonly MyApplicationDB _context= context;
+        
         //[HttpPost]
         //public async Task<ActionResult<ClsUsers>> InsertUser(ClsUsers user)
         //{
