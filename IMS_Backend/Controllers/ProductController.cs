@@ -50,7 +50,7 @@ namespace IMS_Backend.Controllers
                     SubCategory_id = prodDto.SubCategory_id,
                     SKU = prodDto.SKU,
                     Original_Cost = prodDto.Original_Cost,
-                    Reorder_lavel = prodDto.Reorder_level,
+                    Reorder_level = prodDto.Reorder_level,
                     IsActive = prodDto.IsActive
                 };
 
@@ -99,7 +99,7 @@ namespace IMS_Backend.Controllers
             existingProduct.SubCategory_id = prodDto.SubCategory_id;
             existingProduct.SKU = prodDto.SKU;
             existingProduct.Original_Cost = prodDto.Original_Cost;
-            existingProduct.Reorder_lavel = prodDto.Reorder_level;
+            existingProduct.Reorder_level = prodDto.Reorder_level;
 
 
             var ProdFromDb = new Products
@@ -111,7 +111,7 @@ namespace IMS_Backend.Controllers
                 SubCategory_id = prodDto.SubCategory_id,
                 SKU = prodDto.SKU,
                 Original_Cost = prodDto.Original_Cost,
-                Reorder_lavel = prodDto.Reorder_level
+                Reorder_level = prodDto.Reorder_level
             };
             _context.SaveChanges();
             return Ok(new { message = "Product added successfully", productId = id });
