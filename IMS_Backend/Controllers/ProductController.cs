@@ -20,7 +20,7 @@ namespace IMS_Backend.Controllers
         public Decimal Original_Cost { get; set; }
         public Decimal Reorder_level { get; set; }
         public bool IsActive { get; set; }
-
+        public int? Quantity { get; set; }
     };
 
     [ApiController]
@@ -51,6 +51,7 @@ namespace IMS_Backend.Controllers
                     SKU = prodDto.SKU,
                     Original_Cost = prodDto.Original_Cost,
                     Reorder_level = prodDto.Reorder_level,
+                    Quantity=prodDto.Quantity,
                     IsActive = prodDto.IsActive
                 };
 
@@ -100,6 +101,7 @@ namespace IMS_Backend.Controllers
             existingProduct.SKU = prodDto.SKU;
             existingProduct.Original_Cost = prodDto.Original_Cost;
             existingProduct.Reorder_level = prodDto.Reorder_level;
+            existingProduct.Quantity = prodDto.Quantity;
 
 
             var ProdFromDb = new Products
@@ -114,7 +116,7 @@ namespace IMS_Backend.Controllers
                 Reorder_level = prodDto.Reorder_level
             };
             _context.SaveChanges();
-            return Ok(new { message = "Product added successfully", productId = id });
+            return Ok(new { message = $"{prodDto.Name} updated successfully", productId = id });
         }
     }
 }

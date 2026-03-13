@@ -15,8 +15,11 @@ namespace IMS_Backend.Models
         public required string SKU { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal Original_Cost { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal Reorder_level { get; set; }
+
+        public int? Quantity { get; set; }
         public bool? IsActive { get; set; } 
 
         public int? UserId { get; set; }

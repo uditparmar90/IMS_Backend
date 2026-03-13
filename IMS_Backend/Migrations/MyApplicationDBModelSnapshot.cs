@@ -126,7 +126,10 @@ namespace IMS_Backend.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Reorder_lavel")
+                    b.Property<int?>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Reorder_level")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("SKU")
