@@ -54,34 +54,6 @@ namespace IMS_Backend.Migrations
                     b.ToTable("ClsUsers");
                 });
 
-            modelBuilder.Entity("IMS_Backend.Models.Inventory_Transactions", b =>
-                {
-                    b.Property<int>("Transaction_id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Transaction_id"));
-
-                    b.Property<DateTime>("Created_at")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Product_id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Transaction_type")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Transaction_id");
-
-                    b.ToTable("Inventory_Transactions");
-                });
-
             modelBuilder.Entity("IMS_Backend.Models.ProductCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -173,6 +145,41 @@ namespace IMS_Backend.Migrations
                     b.HasKey("StockId");
 
                     b.ToTable("stockLvls");
+                });
+
+            modelBuilder.Entity("IMS_Backend.Models.Transactions", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<decimal>("Original_Cost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("prodId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("quantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("tran_Date")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("transactions");
                 });
 #pragma warning restore 612, 618
         }
