@@ -92,7 +92,7 @@ namespace IMS_Backend.Controllers
                 _context.SaveChanges();
             }
 
-            return Ok();
+            return Ok(new { HttpResponseMessage=200 });
         }
         [HttpPost("EditUserProfile")]
         public IActionResult EditUserProfile([FromBody] ClsUsers user)
@@ -124,6 +124,7 @@ namespace IMS_Backend.Controllers
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
+        public required string confirmPassword { get; set; }
         public required string Name { get; set; }
         public required string Role { get; set; }
 
