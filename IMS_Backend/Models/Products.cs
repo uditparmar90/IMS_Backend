@@ -24,5 +24,6 @@ namespace IMS_Backend.Models
 
         public int? UserId { get; set; }
 
+        
     }
 }

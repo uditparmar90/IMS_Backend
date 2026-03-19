@@ -41,18 +41,23 @@ namespace IMS_Backend.Controllers
                     {
                         name = a.name,
                         UserId = userid,
-                        prodId = a.prodId,
+                        prodId = a.id,
                         price = a.price,
                         quantity = a.quantity,
                         Original_Cost = 0,
                         tran_Date = DateTime.UtcNow
                     });
                 }
-                foreach(var a in finaldata)
+                foreach(var prod in finaldata)
                 {
                     try
                     {
-                        _context.transactions.Add(a);
+                        _context.transactions.Add(prod);
+                        var products = (Products)_context.Products.FirstOrDefault(prod2 =>
+                        
+                            prod2.UserId == userid && prod.prodId == prod2.Id
+                        );
+                        products.Quantity = (int?)(products.Quantity - prod.quantity);
                         _context.SaveChanges();
 
                     }
