@@ -32,7 +32,7 @@ namespace IMS_Backend.Controllers
         readonly int UserId;
 
 
-        [HttpPost("Insert")]
+        [HttpPost("Insert")] 
         public IActionResult Insert([FromBody] ProductTdo prodDto)
         {
             try

@@ -53,11 +53,15 @@ namespace IMS_Backend.Controllers
                     try
                     {
                         _context.transactions.Add(prod);
-                        var products = (Products)_context.Products.FirstOrDefault(prod2 =>
-                        
+                        var products = _context.Products.FirstOrDefault(prod2 =>
+
                             prod2.UserId == userid && prod.prodId == prod2.Id
                         );
-                        products.Quantity = (int?)(products.Quantity - prod.quantity);
+                        if(products != null)
+                        {
+                            products.Quantity = (int?)(products.Quantity - prod.quantity);
+                        }
+                        
                         _context.SaveChanges();
 
                     }
