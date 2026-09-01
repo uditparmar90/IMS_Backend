@@ -85,6 +85,10 @@ namespace IMS_Backend.Migrations
                     b.Property<int>("Category_id")
                         .HasColumnType("int");
 
+                    b.Property<byte[]>("Image")
+                        .HasColumnType("varbinary(max)")
+                        .HasColumnName("VARBINARY(MAX)");
+
                     b.Property<bool?>("IsActive")
                         .HasColumnType("bit");
 
@@ -105,7 +109,6 @@ namespace IMS_Backend.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("SKU")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SubCategory_id")

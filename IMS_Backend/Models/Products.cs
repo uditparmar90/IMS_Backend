@@ -6,13 +6,15 @@ namespace IMS_Backend.Models
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+        [Column("VARBINARY(MAX)")]
+        public byte[]? Image { get; set; } = [];
         public string Name { get; set; } = string.Empty;
         [Column(TypeName ="decimal(18,2)")]
         public decimal Price { get; set; }
         public int Category_id { get; set; }
         public int SubCategory_id { get; set; }
         //..Stock kipping Unit
-        public required string SKU { get; set; }
+        public string? SKU { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal Original_Cost { get; set; }
 

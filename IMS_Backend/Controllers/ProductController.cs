@@ -2,15 +2,18 @@
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations.Schema; 
 using System.Diagnostics;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace IMS_Backend.Controllers
 {
-    public class ProductTdo
+    public class ProductTdo     
     {
         //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UserId { get; set; }
+        public IFormFile? Image { get; set; }          // <-- changed to IFormFile?
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Category_id { get; set; }
@@ -32,18 +35,67 @@ namespace IMS_Backend.Controllers
         readonly int UserId;
 
 
-        [HttpPost("Insert")] 
-        public IActionResult Insert([FromBody] ProductTdo prodDto)
+        //[HttpPost("Insert")] 
+        //public IActionResult Insert([FromForm] ProductTdo prodDto)
+        //{
+        //    try
+        //    {
+        //        var StrUserId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        //        Console.WriteLine("userid : " + StrUserId);
+        //        int UserId = Convert.ToInt32(StrUserId);
+
+        //        var newProduct = new Products
+        //        {
+        //            UserId = UserId,
+        //            Name = prodDto.Name,
+        //            Price = prodDto.Price,
+        //            Category_id = prodDto.Category_id,
+        //            SubCategory_id = prodDto.SubCategory_id,
+        //            SKU = prodDto.SKU,
+        //            Original_Cost = prodDto.Original_Cost,
+        //            Reorder_level = prodDto.Reorder_level,
+        //            Quantity=prodDto.Quantity,
+        //            IsActive = prodDto.IsActive
+        //        };
+
+        //        var msg = _context.Products.AddAsync(newProduct);
+        //        Debug.WriteLine(msg);
+        //        _context.SaveChanges();
+        //        return Ok(new { message = "Product added successfully", productId = newProduct.Id });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine(ex.Message);
+        //        return StatusCode(500, new { error = ex.Message });
+        //    }
+        //}
+
+        [HttpPost("Insert")]
+        public async Task<IActionResult> Insert([FromForm] ProductTdo prodDto)
         {
             try
             {
-                var StrUserId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-                Console.WriteLine("userid : " + StrUserId);
-                int UserId = Convert.ToInt32(StrUserId);
+                var strUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(strUserId))
+                    return Unauthorized();
+
+                int userId = Convert.ToInt32(strUserId);
+
+                byte[]? imageBytes = null;
+
+                if (prodDto.Image != null && prodDto.Image.Length > 0)
+                {
+                    using var memoryStream = new MemoryStream();
+
+                    await prodDto.Image.CopyToAsync(memoryStream);
+
+                    imageBytes = memoryStream.ToArray();
+                }
 
                 var newProduct = new Products
                 {
-                    UserId = UserId,
+                    UserId = userId,
                     Name = prodDto.Name,
                     Price = prodDto.Price,
                     Category_id = prodDto.Category_id,
@@ -51,21 +103,33 @@ namespace IMS_Backend.Controllers
                     SKU = prodDto.SKU,
                     Original_Cost = prodDto.Original_Cost,
                     Reorder_level = prodDto.Reorder_level,
-                    Quantity=prodDto.Quantity,
-                    IsActive = prodDto.IsActive
+                    Quantity = prodDto.Quantity,
+                    IsActive = prodDto.IsActive,
+
+                    // Store image in VARBINARY(MAX)
+                    Image = imageBytes
                 };
 
-                var msg = _context.Products.AddAsync(newProduct);
-                Debug.WriteLine(msg);
-                _context.SaveChanges();
-                return Ok(new { message = "Product added successfully", productId = newProduct.Id });
+                _context.Products.Add(newProduct);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Product added successfully",
+                    productId = newProduct.Id
+                });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new
+                {
+                    error = ex.Message
+                });
             }
         }
+
+
         [HttpGet]
         [Route("GetAllProducts")]
         public List<Products> GetAllProducts()
@@ -87,13 +151,27 @@ namespace IMS_Backend.Controllers
         }
         [HttpPut]
         [Route("Update/{id}")]
-        public IActionResult UpdateProduct(int id, [FromBody] ProductTdo prodDto)
+        public IActionResult UpdateProduct(int id, [FromForm] ProductTdo prodDto)
         {
             var existingProduct = _context.Products.Find(id);
             if (existingProduct == null)
             {
                 return NotFound(new { message = "Product not found" });
             }
+
+            byte[]? imageBytes = null;
+
+            if (prodDto.Image != null && prodDto.Image.Length > 0)
+            {
+                using var memoryStream = new MemoryStream();
+
+                prodDto.Image.CopyToAsync(memoryStream);
+
+                imageBytes = memoryStream.ToArray();
+            }
+
+
+            existingProduct.Image = imageBytes;
             existingProduct.Name = prodDto.Name;
             existingProduct.Price = prodDto.Price;
             existingProduct.Category_id = prodDto.Category_id;
