@@ -2,6 +2,7 @@
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace IMS_Backend.Controllers
@@ -25,7 +26,7 @@ namespace IMS_Backend.Controllers
             return Ok(category);
         }
         [HttpGet]
-        [Route("GetCategory")]
+        [Route("GetCategory/{id}")]
         public IActionResult GetCategory(int Id)
         {
             int UserTd = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -45,7 +46,7 @@ namespace IMS_Backend.Controllers
             return Ok(IsInserted); 
         }
         [HttpDelete]
-        [Route("Delete")]
+        [Route("Delete/{Id}")]
         public IActionResult Delete(int Id)
         {
             int UserId=Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -53,9 +54,16 @@ namespace IMS_Backend.Controllers
             if (Id > 0)
             {
                 ProductCategory obj = _context.ProdCategory.FirstOrDefault(item => item.UserId == UserId && item.Id == Id);
-
-                _context.ProdCategory.Remove(obj);
-                _context.SaveChanges();
+                bool canDelete = _context.Products.Any(item => item.Category_id ==Id);
+                if (canDelete)
+                {
+                    _context.ProdCategory.Remove(obj);
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    return Conflict(new { message = "This category is assigned to products and cannot be deleted." });
+                }
                 return Ok(Id);
             }
             else
