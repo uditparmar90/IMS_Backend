@@ -37,8 +37,17 @@ namespace IMS_Backend.Controllers
         [Route("Insert")]
         public IActionResult Insert(ProductCategory category)
         {
+            int userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            ProductCategory obj = new ProductCategory
+            {
+                UserId = userId,
+                Name = category.Name,
+                IsActive=category.IsActive
+            };
+
             Console.WriteLine("You insert : "+category);
-             _context.ProdCategory.Add(category);
+            _context.ProdCategory.Add(category);
             int RowsAffected=_context.SaveChanges();
             bool IsInserted=RowsAffected > 0 ? true : false;
             
