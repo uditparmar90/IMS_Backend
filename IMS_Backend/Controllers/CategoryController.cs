@@ -2,6 +2,7 @@
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace IMS_Backend.Controllers
@@ -33,25 +34,67 @@ namespace IMS_Backend.Controllers
             return Ok(record);
         }
 
+
+        //performs Insert & Update operations
         [HttpPost]
         [Route("Insert")]
         public IActionResult Insert(ProductCategory category)
         {
-            int userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            int UserId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            int RowsAffected;
 
-            ProductCategory obj = new ProductCategory
+            if (category.Id > 0)
             {
-                UserId = userId,
-                Name = category.Name,
-                IsActive=category.IsActive
-            };
+                try
+                {
+                    ProductCategory obj = _context.ProdCategory.FirstOrDefault(item => item.UserId == UserId && item.Id == category.Id);
 
-            Console.WriteLine("You insert : "+category);
-            _context.ProdCategory.Add(category);
-            int RowsAffected=_context.SaveChanges();
-            bool IsInserted=RowsAffected > 0 ? true : false;
-            
-            return Ok(IsInserted); 
+                    if (obj != null)
+                    {
+                        obj.Name = category.Name;
+                        obj.IsActive = category.IsActive;
+
+                        _context.ProdCategory.Update(obj);
+                        RowsAffected= _context.SaveChanges();
+                        //return Ok(obj.Id);
+                    }
+                    else
+                    {
+                        return NoContent();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+            else
+            {
+                try
+                {
+
+                    ProductCategory obj = new()
+                    {
+                        UserId = UserId,
+                        Name = category.Name,
+                        IsActive = category.IsActive
+                    };
+
+                    Console.WriteLine("You insert : " + obj);
+                    _context.ProdCategory.Add(obj);
+                    RowsAffected = _context.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    RowsAffected = 0;
+                }
+
+            }
+
+            bool IsInserted = RowsAffected > 0 ? true : false;
+            return Ok(IsInserted);
+
+
         }
         [HttpDelete]
         [Route("Delete/{Id}")]
@@ -62,15 +105,15 @@ namespace IMS_Backend.Controllers
             if (Id > 0)
             {
                 ProductCategory obj = _context.ProdCategory.FirstOrDefault(item => item.UserId == UserId && item.Id == Id);
-                bool canDelete = _context.Products.Any(item => item.Category_id ==Id);
-                if (canDelete)
+                bool isAssigned = _context.Products.Any(item => item.Category_id ==Id);
+                if (isAssigned)
                 {
-                    _context.ProdCategory.Remove(obj);
-                    _context.SaveChanges();
+                    return Conflict(new { message = "This category is assigned to products and cannot be deleted." });
                 }
                 else
                 {
-                    return Conflict(new { message = "This category is assigned to products and cannot be deleted." });
+                    _context.ProdCategory.Remove(obj);
+                    _context.SaveChanges();
                 }
                 return Ok(Id);
             }
@@ -80,25 +123,25 @@ namespace IMS_Backend.Controllers
             }
         }
 
-        [HttpPut]
-        [Route("Update")]
-        public IActionResult Update(ProductCategory category)
-        {
-            int UserId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            ProductCategory obj = _context.ProdCategory.FirstOrDefault(item => item.UserId == UserId && item.Id == category.Id);
+        //[HttpPut]
+        //[Route("Update")]
+        //public IActionResult Update(ProductCategory category)
+        //{
+        //    int UserId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        //    ProductCategory obj = _context.ProdCategory.FirstOrDefault(item => item.UserId == UserId && item.Id == category.Id);
 
-            if (obj!=null)
-            {
-                obj.Name = category.Name;
+        //    if (obj!=null)
+        //    {
+        //        obj.Name = category.Name;
 
-                _context.ProdCategory.Update(obj);
-                _context.SaveChanges();
-                return Ok(obj.Id);
-            }
-            else
-            {
-                return NoContent();
-            }
-        }
+        //        _context.ProdCategory.Update(obj);
+        //        _context.SaveChanges();
+        //        return Ok(obj.Id);
+        //    }
+        //    else
+        //    {
+        //        return NoContent();
+        //    }
+        //}
     }
 }
