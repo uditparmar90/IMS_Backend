@@ -2,26 +2,21 @@
 using IMS_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations.Schema; 
-using System.Diagnostics;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 
 namespace IMS_Backend.Controllers
 {
-    public class ProductTdo     
+    public class ProductTdo
     {
-        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UserId { get; set; }
-        public IFormFile? Image { get; set; }          // <-- changed to IFormFile?
+        public IFormFile? Image { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Category_id { get; set; }
         public int SubCategory_id { get; set; }
-        //..Stock kipping Unit
         public required string SKU { get; set; }
-        public Decimal Original_Cost { get; set; }
-        public Decimal Reorder_level { get; set; }
+        public decimal Original_Cost { get; set; }
+        public decimal Reorder_level { get; set; }
         public bool IsActive { get; set; }
         public int? Quantity { get; set; }
     };
@@ -31,67 +26,21 @@ namespace IMS_Backend.Controllers
     [Authorize]
     public class ProductController(MyApplicationDB context) : ControllerBase
     {
-        readonly MyApplicationDB _context= context;
-        readonly int UserId;
-
-
-        //[HttpPost("Insert")] 
-        //public IActionResult Insert([FromForm] ProductTdo prodDto)
-        //{
-        //    try
-        //    {
-        //        var StrUserId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-        //        Console.WriteLine("userid : " + StrUserId);
-        //        int UserId = Convert.ToInt32(StrUserId);
-
-        //        var newProduct = new Products
-        //        {
-        //            UserId = UserId,
-        //            Name = prodDto.Name,
-        //            Price = prodDto.Price,
-        //            Category_id = prodDto.Category_id,
-        //            SubCategory_id = prodDto.SubCategory_id,
-        //            SKU = prodDto.SKU,
-        //            Original_Cost = prodDto.Original_Cost,
-        //            Reorder_level = prodDto.Reorder_level,
-        //            Quantity=prodDto.Quantity,
-        //            IsActive = prodDto.IsActive
-        //        };
-
-        //        var msg = _context.Products.AddAsync(newProduct);
-        //        Debug.WriteLine(msg);
-        //        _context.SaveChanges();
-        //        return Ok(new { message = "Product added successfully", productId = newProduct.Id });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Debug.WriteLine(ex.Message);
-        //        return StatusCode(500, new { error = ex.Message });
-        //    }
-        //}
+        readonly MyApplicationDB _context = context;
 
         [HttpPost("Insert")]
         public async Task<IActionResult> Insert([FromForm] ProductTdo prodDto)
         {
             try
             {
-                var strUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (string.IsNullOrEmpty(strUserId))
+                if (!TryGetUserId(out int userId))
                     return Unauthorized();
 
-                int userId = Convert.ToInt32(strUserId);
+                var skuConflict = SkuConflict(userId, prodDto.SKU, excludeProductId: null);
+                if (skuConflict != null)
+                    return skuConflict;
 
-                byte[]? imageBytes = null;
-
-                if (prodDto.Image != null && prodDto.Image.Length > 0)
-                {
-                    using var memoryStream = new MemoryStream();
-
-                    await prodDto.Image.CopyToAsync(memoryStream);
-
-                    imageBytes = memoryStream.ToArray();
-                }
+                byte[]? imageBytes = await ReadImageBytes(prodDto.Image);
 
                 var newProduct = new Products
                 {
@@ -105,13 +54,10 @@ namespace IMS_Backend.Controllers
                     Reorder_level = prodDto.Reorder_level,
                     Quantity = prodDto.Quantity,
                     IsActive = prodDto.IsActive,
-
-                    // Store image in VARBINARY(MAX)
                     Image = imageBytes
                 };
 
                 _context.Products.Add(newProduct);
-
                 await _context.SaveChangesAsync();
 
                 return Ok(new
@@ -122,56 +68,78 @@ namespace IMS_Backend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = ex.Message
-                });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
-
 
         [HttpGet]
         [Route("GetAllProducts")]
-        public List<Products> GetAllProducts()
+        public IActionResult GetAllProducts()
         {
-            var StrUserId=User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-            Console.WriteLine("userid : " + StrUserId);
-            int UserId = Convert.ToInt32(StrUserId);
-            var products = _context.Products.Where(prod =>prod.UserId== UserId).OrderByDescending(p => p.Id).ToList();
-            return products;
+            if (!TryGetUserId(out int userId))
+                return Unauthorized();
+
+            var products = _context.Products
+                .Where(prod => prod.UserId == userId)
+                .OrderByDescending(p => p.Id)
+                .ToList();
+            return Ok(products);
+        }
+
+        [HttpGet]
+        [Route("GetProduct/{id}")]
+        public IActionResult GetProduct(int id)
+        {
+            if (!TryGetUserId(out int userId))
+                return Unauthorized();
+
+            var product = FindOwnedProduct(id, userId);
+            if (product == null)
+                return NotFound(new { message = "Product not found" });
+
+            return Ok(product);
         }
 
         [HttpDelete]
-        [Route("delete/{id}")]
-        public int Delete(int id)
+        [Route("Delete/{id}")]
+        public IActionResult Delete(int id)
         {
-            _context.Products.Remove(_context.Products.Find(id)!);
+            if (!TryGetUserId(out int userId))
+                return Unauthorized();
+
+            var product = FindOwnedProduct(id, userId);
+            if (product == null)
+                return NotFound(new { message = "Product not found" });
+
+            bool isUsed = _context.transactions.Any(t => t.prodId == id && t.UserId == userId);
+            if (isUsed)
+                return Conflict(new { message = "This product is used in sales and cannot be deleted." });
+
+            _context.Products.Remove(product);
             _context.SaveChanges();
-            return id;  
+            return Ok(id);
         }
+
         [HttpPut]
         [Route("Update/{id}")]
-        public IActionResult UpdateProduct(int id, [FromForm] ProductTdo prodDto)
+        public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductTdo prodDto)
         {
-            var existingProduct = _context.Products.Find(id);
-            if (existingProduct == null)
-            {
-                return NotFound(new { message = "Product not found" });
-            }
+            if (!TryGetUserId(out int userId))
+                return Unauthorized();
 
-            byte[]? imageBytes = null;
+            var existingProduct = FindOwnedProduct(id, userId);
+            if (existingProduct == null)
+                return NotFound(new { message = "Product not found" });
+
+            var skuConflict = SkuConflict(userId, prodDto.SKU, excludeProductId: id);
+            if (skuConflict != null)
+                return skuConflict;
 
             if (prodDto.Image != null && prodDto.Image.Length > 0)
             {
-                using var memoryStream = new MemoryStream();
-
-                prodDto.Image.CopyToAsync(memoryStream);
-
-                imageBytes = memoryStream.ToArray();
+                existingProduct.Image = await ReadImageBytes(prodDto.Image);
             }
 
-
-            existingProduct.Image = imageBytes;
             existingProduct.Name = prodDto.Name;
             existingProduct.Price = prodDto.Price;
             existingProduct.Category_id = prodDto.Category_id;
@@ -180,21 +148,57 @@ namespace IMS_Backend.Controllers
             existingProduct.Original_Cost = prodDto.Original_Cost;
             existingProduct.Reorder_level = prodDto.Reorder_level;
             existingProduct.Quantity = prodDto.Quantity;
+            existingProduct.IsActive = prodDto.IsActive;
 
-
-            var ProdFromDb = new Products
-            {
-                //Id = prodDto.Id,
-                Name = prodDto.Name,
-                Price = prodDto.Price,
-                Category_id = prodDto.Category_id,
-                SubCategory_id = prodDto.SubCategory_id,
-                SKU = prodDto.SKU,
-                Original_Cost = prodDto.Original_Cost,
-                Reorder_level = prodDto.Reorder_level
-            };
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(new { message = $"{prodDto.Name} updated successfully", productId = id });
+        }
+
+        bool TryGetUserId(out int userId)
+        {
+            var strUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(strUserId))
+            {
+                userId = 0;
+                return false;
+            }
+
+            userId = Convert.ToInt32(strUserId);
+            return true;
+        }
+
+        Products? FindOwnedProduct(int id, int userId)
+        {
+            return _context.Products.FirstOrDefault(p => p.Id == id && p.UserId == userId);
+        }
+
+        IActionResult? SkuConflict(int userId, string sku, int? excludeProductId)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+                return BadRequest(new { message = "SKU is required." });
+
+            var query = _context.Products.Where(p =>
+                p.UserId == userId &&
+                p.SKU != null &&
+                p.SKU.ToLower() == sku.Trim().ToLower());
+
+            if (excludeProductId.HasValue)
+                query = query.Where(p => p.Id != excludeProductId.Value);
+
+            if (query.Any())
+                return Conflict(new { message = "A product with this SKU already exists." });
+
+            return null;
+        }
+
+        static async Task<byte[]?> ReadImageBytes(IFormFile? image)
+        {
+            if (image == null || image.Length == 0)
+                return null;
+
+            using var memoryStream = new MemoryStream();
+            await image.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
         }
     }
 }
